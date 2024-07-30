@@ -17,7 +17,7 @@ stores = [
 # All this compose a VIEW FUNCTION
 # This is a Flask endpoint
 @app.get("/store")
-def get_store():
+def get_stores():
     return {"stores" : stores}
 
 @app.post("/store")
@@ -45,4 +45,16 @@ def create_item(name):
             return new_item, 201
     return {"message" : "Store not found"}, 404
         
+@app.get("/store/<string:name>")
+def get_store(name):
+    for store in stores:
+        if store['name'] == name:
+            return store, 200
+    return {"message" : "Store not found"}, 404
 
+@app.get("/store/<string:name>/item")
+def get_item_in_store(name):
+    for store in stores:
+        if store['name'] == name:
+            return {"items" : store["items"]}, 200
+    return {"message" : "Store not found"}, 404
