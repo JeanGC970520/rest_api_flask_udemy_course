@@ -1,5 +1,13 @@
 """
 - abort() method is using to help us document unsuccessful responses.
+
+- With @blp.arguments() decorator, we can use a Schema
+to validate data and this provide a validated data.
+The validated data provided must be first in the 
+arguments of decorated method
+
+- With blp.response() decorator, we return a response
+validated and with a specific HTTP status code
 """
 
 import uuid 
@@ -14,9 +22,10 @@ blp = Blueprint("Items", __name__, description="Operations on items")
 
 @blp.route("/item/<string:item_id>")
 class Item(MethodView):
+    @blp.response(200, ItemSchema)
     def get(self, item_id):
         try:
-            return items[item_id], 200
+            return items[item_id]
         except KeyError:
             abort(404, message="Item not found")
     
@@ -26,12 +35,9 @@ class Item(MethodView):
             return {"message": "Item deleted"}
         except KeyError:
             abort(404, message="Item not found")\
-            
-    # With blp.arguments() decorator, we can use a Schema
-    # to validate data and this provide a validated data.
-    # The validated data provided must be first in the 
-    # arguments of decorated method
+
     @blp.arguments(ItemUpdateSchema)
+    @blp.response(200, ItemSchema)
     def put(self, item_data, item_id):
         try:
             item = items[item_id]
@@ -43,10 +49,12 @@ class Item(MethodView):
 
 @blp.route("/item")
 class ItemList(MethodView):
+    @blp.response(200, ItemSchema(many=True))
     def get(self):
-        return {"items" : list(items.values())}
+        return items.values()
     
     @blp.arguments(ItemSchema)
+    @blp.response(201, ItemSchema)
     def post(self, item_data):  
         for item in items.values():
             if(
@@ -57,4 +65,4 @@ class ItemList(MethodView):
         item_id = uuid.uuid4().hex
         item = {**item_data, "id" : item_id}
         items[item_id] = item
-        return item, 201
+        return item

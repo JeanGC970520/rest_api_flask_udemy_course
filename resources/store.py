@@ -1,5 +1,13 @@
 """
 - abort() method is using to help us document unsuccessful responses.
+
+- With @blp.arguments() decorator, we can use a Schema
+to validate data and this provide a validated data.
+The validated data provided must be first in the 
+arguments of decorated method
+
+- With blp.response() decorator, we return a response
+validated and with a specific HTTP status code
 """
 
 import uuid
@@ -16,6 +24,7 @@ blp = Blueprint("stores", __name__, description="Operations on stores")
 # by example '/store/sf4jk23sdf-3sfjk-dsk2-a322'
 @blp.route("/store/<string:store_id>")
 class Store(MethodView):
+    @blp.response(200, StoreSchema)
     def get(self, store_id):
         try:
             return stores[store_id]
@@ -31,10 +40,12 @@ class Store(MethodView):
 
 @blp.route("/store")
 class StoreList(MethodView):
+    @blp.response(200, StoreSchema(many=True))
     def get(self):
-        return {"stores" : list(stores.values())}
+        return stores.values()
 
     @blp.arguments(StoreSchema)
+    @blp.response(201, StoreSchema)
     def post(self, store_data):
         for store in stores.values():
             if store_data["name"] == store["name"]:
@@ -45,4 +56,4 @@ class StoreList(MethodView):
             **store_data,
         }
         stores[store_id] = store
-        return store, 201
+        return store
