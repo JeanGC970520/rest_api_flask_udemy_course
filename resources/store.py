@@ -11,11 +11,12 @@ validated and with a specific HTTP status code
 """
 
 import uuid
-from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-from db import stores
+from db import db
+from models import StoreModel
 from schemas import StoreSchema
 
 blp = Blueprint("stores", __name__, description="Operations on stores")
@@ -47,13 +48,17 @@ class StoreList(MethodView):
     @blp.arguments(StoreSchema)
     @blp.response(201, StoreSchema)
     def post(self, store_data):
-        for store in stores.values():
-            if store_data["name"] == store["name"]:
-                abort(400, message=f"{store} already exist")
-        store_id = uuid.uuid4().hex
-        store = {
-            "id" : store_id,
-            **store_data,
-        }
-        stores[store_id] = store
+        store = StoreModel(**store_data)
+        try:
+            db.session.add(store)
+            db.session.commit()
+        except IntegrityError:
+            # This is a integrity error, occurs when any constraints was bailed
+            abort(
+                400,
+                message="A store with that name already exists"
+            )
+        except SQLAlchemyError:
+            abort(500, message="An error ocurred creating the store")
+        
         return store
