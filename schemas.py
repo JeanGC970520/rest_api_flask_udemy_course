@@ -19,7 +19,7 @@ class ItemUpdateSchema(Schema):
     # Here one or both are optional
     name = fields.Str()
     price = fields.Float()
-    store_id = fields.Int()
+    store_id = fields.Int() # Adding this attribute o property to accept id and insert an Item
 
 class StoreSchema(PlainStoreSchema):
     items = fields.List(fields.Nested(PlainItemSchema(), dump_only= True))
